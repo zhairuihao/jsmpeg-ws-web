@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JSMpeg Stream Client</title>
+    <style type="text/css">
+        html, body {
+            background-color: #111;
+            text-align: center;
+        }
+    </style>
+
+</head>
+<body>
+<canvas id="video-canvas"></canvas>
+<canvas id="video-canvas1"></canvas>
+<canvas id="video-canvas2"></canvas>
+<canvas id="video-canvas3"></canvas>
+<script type="text/javascript" src="jsmpeg.min.js"></script>
+<script type="text/javascript">
+  var canvas = document.getElementById('video-canvas'), canvas1 = document.getElementById('video-canvas1'),
+      canvas2 = document.getElementById('video-canvas2'), canvas3 = document.getElementById('video-canvas3')
+  ;
+  var url = 'ws://' + document.location.hostname + ':5000';
+  var player = new JSMpeg.Player(url + '?hunan', {canvas: canvas}),
+      player1 = new JSMpeg.Player(url + '?url=rtmp://58.200.131.2:1935/livetv/hunantv', {canvas: canvas1});
+
+</script>
+</body>
+</html>
