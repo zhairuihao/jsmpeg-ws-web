@@ -7,7 +7,7 @@ depends
 
 server.js 提供 ws服务和自动运行本地计算机上的ffmpeg 程序 解析web端传送过来的直播地址，并推送mpegts 程序到客户端， 客户端通过jsMpeg 解析数据绘制在canvas上,不依赖flash 和h5的video标签，所以也不受他们的限制，什么自动播放啥的轻松实现；
 
-
+### 上点效果图 ^-^
 ![效果图1](https://github.com/zhairuihao/jsmpeg-ws-web/blob/master/doc/jsmpeg.gif?raw=true)
 ![效果图2](https://github.com/zhairuihao/jsmpeg-ws-web/blob/master/doc/ffmpeg.png?raw=true)
 ![万恶的IE也毫无压力](https://github.com/zhairuihao/jsmpeg-ws-web/blob/master/doc/jsmpeg-ie.gif?raw=true)
