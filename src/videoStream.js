@@ -24,12 +24,15 @@ class VideoStream extends EventEmitter {
     this.server = new WebSocket.Server({port: this.port});
     this.server.connectionCount = 0;
     this.server.on('connection', (socket, upgradeReq) => {
+
+      socket.on('close', () => {
+        this.server.connectionCount--;
+        console.log(`disconnected ! map`, this.URL_STREAM);
+      });
+
       this.server.connectionCount++;
       const url = upgradeReq.socket.remoteAddress + upgradeReq.url;
-      const key = url.substr(1).split('/')[1];//key就是通过url传递过来的标识比如:(ws://127.0.0.1:8082/live3)其中live3就是这个标识，其他的流可随机生成其他的字符串
-      console.log('stream url is ', getURLParameters(upgradeReq.url));// {token:xxxxxxx}
-      this.clientMap.set(key, socket);
-      // this.URL_STREAM.set(getURLParameters(upgradeReq.url).url, []);
+      console.log('new connection req url [%s]', url);
       let streamUrl = getURLParameters(upgradeReq.url).url;
 
       if (!streamUrl) {return; }
@@ -45,18 +48,14 @@ class VideoStream extends EventEmitter {
       this.URL_STREAM.set(streamUrl, dataCache);
 
       console.log('webSocket产生新的连接:%s ', url);
-      console.log(`New connection: ${this.name}`);
+      // console.log(`New connection: ${this.name}`);
 
-      let streamHeader = Buffer.allocUnsafe(8);
-      streamHeader.write(STREAM_MAGIC_BYTES);
-      streamHeader.writeUInt16BE(this.width, 4);
-      streamHeader.writeUInt16BE(this.height, 6);
-      socket.send(streamHeader);
+      // let streamHeader = Buffer.allocUnsafe(8);
+      // streamHeader.write(STREAM_MAGIC_BYTES);
+      // streamHeader.writeUInt16BE(this.width, 4);
+      // streamHeader.writeUInt16BE(this.height, 6);
+      // socket.send(streamHeader);
 
-      socket.on('close', () => {
-        this.server.connectionCount--;
-        console.log(`${this.name} disconnected !`);
-      });
     });
 
     this.on('camdata', (data) => {
@@ -70,8 +69,13 @@ class VideoStream extends EventEmitter {
       // }
 
       if (data.url) {
-        console.log(this.URL_STREAM.get(data.url).clients.length);
-        this.URL_STREAM.get(data.url).clients.map(function(obj) {
+        const clients = this.URL_STREAM.get(data.url).clients;
+        clients.map(function(obj, index) {
+          if (!obj || obj.readyState !== WebSocket.OPEN) {
+            obj = null;
+            clients.splice(index, 1);
+            return;
+          }
           obj.send(data.data);
         });
       }
@@ -80,7 +84,8 @@ class VideoStream extends EventEmitter {
   }
 
   onSocketConnect(socket) {
-    console.log('onSocketConnect');
+    console.log(
+        '------------------------------------------------onSocketConnect');
     let streamHeader = new Buffer(8);
     streamHeader.write(STREAM_MAGIC_BYTES);
     streamHeader.writeUInt16BE(this.width, 4);
@@ -89,6 +94,7 @@ class VideoStream extends EventEmitter {
     console.log(
         `New connection: ${this.name} - ${this.wsServer.clients.length} total`);
     return socket.on('close', function(code, message) {
+
       return console.log(
           `${this.name} disconnected - ${this.wsServer.clients.length} total`);
     });

@@ -19,11 +19,13 @@ class Mpeg1Muxer extends EventEmitter {
       '2000k',
       '-bf',
       '0',
-      // '-codec:a',
-      // 'mp2',
-      // '-r',
-      // '30',
-      '-'
+      '-vf',
+      'scale=640:360,setsar=1:1',
+      '-codec:a',
+      'mp2',
+      '-r',
+      '30',
+      '-',
     ], {
       detached: false,
     });
