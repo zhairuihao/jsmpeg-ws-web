@@ -17,3 +17,6 @@ test目录下提供了个demo， 启动server.js， 将view-stream.html部署在
 ![效果图2](https://github.com/zhairuihao/jsmpeg-ws-web/blob/master/doc/ffmpeg.png?raw=true)
 ![万恶的IE也毫无压力](https://github.com/zhairuihao/jsmpeg-ws-web/blob/master/doc/jsmpeg-ie.gif?raw=true)
 
+
+### docker
+[**docker-jsmpeg**](https://cloud.docker.com/u/zhairuihao/repository/docker/zhairuihao/jsmpeg)
