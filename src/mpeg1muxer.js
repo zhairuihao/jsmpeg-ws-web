@@ -35,7 +35,12 @@ class Mpeg1Muxer extends EventEmitter {
       return this.emit('mpeg1data', data);
     });
     this.stream.stderr.on('data',
-        (data) => { return this.emit('ffmpegError', data); });
+        (data) => {
+          return this.emit('ffmpegError', data);
+        });
+    this.stream.on('close', (code) => {
+      console.log(`child process exited with code ${code}`);
+    });
   }
 
   stop() {

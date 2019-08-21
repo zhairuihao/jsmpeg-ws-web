@@ -3,7 +3,6 @@ const EventEmitter = require('events');
 const STREAM_MAGIC_BYTES = 'jsmp';
 const Mpeg1Muxer = require('./mpeg1muxer');
 
-// TODO-WARN:  客户端和FFMPEG服务在客户端断开连接时没有及时清理 会造成内存溢出， 待修复
 class VideoStream extends EventEmitter {
 
   constructor(options) {
@@ -20,30 +19,28 @@ class VideoStream extends EventEmitter {
 
   stream2Socket() {
     // {rtsp:{clients:[c1,c2,c3], mpeg:''}}
-    this.URL_STREAM = new Map(), this.clientMap = new Map();//缓存，实现多个视频流同时播放的问题
+    this.URL_STREAM = new URLStream();
     this.server = new WebSocket.Server({port: this.port});
     this.server.connectionCount = 0;
     this.server.on('connection', (socket, upgradeReq) => {
-
+      const url = upgradeReq.socket.remoteAddress + upgradeReq.url;
+      console.log('new connection req url [%s]', url);
       socket.on('close', () => {
         this.server.connectionCount--;
-        console.log(`disconnected ! map`, this.URL_STREAM);
+        console.log(`%s disconnected ! `, url);
+        // 检查断开连接的客户端查看的视频源是否任然有其他客户端使用，没有则关闭视频源
+        this.URL_STREAM.removeNoUse();
       });
 
       this.server.connectionCount++;
-      const url = upgradeReq.socket.remoteAddress + upgradeReq.url;
-      console.log('new connection req url [%s]', url);
       let streamUrl = getURLParameters(upgradeReq.url).url;
 
       if (!streamUrl) {return; }
+
       let dataCache = this.URL_STREAM.get(streamUrl);
-      dataCache || (dataCache = {});
-      if (Array.isArray(dataCache.clients)) {
-        dataCache.clients.push(socket);
-      } else {
-        dataCache.clients = [];
-        dataCache.clients.push(socket);
-      }
+      dataCache || (dataCache = new DataCache());
+      dataCache.clients.push(socket);
+
       dataCache.mpeg = this.initMpeg1Muxe(streamUrl);
       this.URL_STREAM.set(streamUrl, dataCache);
 
@@ -57,7 +54,7 @@ class VideoStream extends EventEmitter {
       // socket.send(streamHeader);
 
     });
-
+    console.log('ws address :', this.server.address());
     this.on('camdata', (data) => {
       // console.log("camdata", this.server.clients);
       // for (const client of this.server.clients) {
@@ -68,7 +65,7 @@ class VideoStream extends EventEmitter {
       //     client.send(data.data); }
       // }
 
-      if (data.url) {
+      if (data.url && this.URL_STREAM.has(data.url)) {
         const clients = this.URL_STREAM.get(data.url).clients;
         clients.map(function(obj, index) {
           if (!obj || obj.readyState !== WebSocket.OPEN) {
@@ -153,26 +150,26 @@ class VideoStream extends EventEmitter {
     let gettingOutputData = false;
     let inputData = [];
     let outputData = [];
-    mpeg1Muxer.on('ffmpegError', (data) => {
-      data = data.toString();
-      if (data.indexOf('Input #') !== -1) { gettingInputData = true; }
-      if (data.indexOf('Output #') !== -1) {
-        gettingInputData = false;
-        gettingOutputData = true;
-      }
-      if (data.indexOf('frame') === 0) { gettingOutputData = false; }
-      if (gettingInputData) {
-        inputData.push(data.toString());
-        let size = data.match(/\d+x\d+/);
-        if (size != null) {
-          size = size[0].split('x');
-          if (this.width == null) { this.width = parseInt(size[0], 10); }
-          if (this.height == null) {
-            return this.height = parseInt(size[1], 10);
-          }
-        }
-      }
-    });
+    // mpeg1Muxer.on('ffmpegError', (data) => {
+    //   data = data.toString();
+    //   if (data.indexOf('Input #') !== -1) { gettingInputData = true; }
+    //   if (data.indexOf('Output #') !== -1) {
+    //     gettingInputData = false;
+    //     gettingOutputData = true;
+    //   }
+    //   if (data.indexOf('frame') === 0) { gettingOutputData = false; }
+    //   if (gettingInputData) {
+    //     inputData.push(data.toString());
+    //     let size = data.match(/\d+x\d+/);
+    //     if (size != null) {
+    //       size = size[0].split('x');
+    //       if (this.width == null) { this.width = parseInt(size[0], 10); }
+    //       if (this.height == null) {
+    //         return this.height = parseInt(size[1], 10);
+    //       }
+    //     }
+    //   }
+    // });
     mpeg1Muxer.on('ffmpegError',
         (data) => { return global.process.stderr.write(data); });
 
@@ -200,9 +197,60 @@ function getURLParameters(url) {
 }
 
 class DataCache {
-  constructor(option) {
-    this.clients = option.clients || [];
-    this.mpeg = option.mpeg;
+  constructor() {
+    this.clients = [];
+    this.mpeg = null;
+  }
+
+  getReadyClients() {
+    return this.clients.filter(function(client) {
+      return client.readyState === WebSocket.OPEN;
+    });
+  }
+
+  hasReadyClient() {
+    return this.getReadyClients().length > 0;
+  }
+
+  stopStream() {
+    this.mpeg.stop();
+    this.mpeg.removeAllListeners();
+    this.mpeg = undefined;
+  }
+
+  removeCloseClients() {
+    this.clients.map(function(client, index) {
+      client = null;
+      this.clients.splice(index, 1);
+    });
+  }
+
+}
+
+class URLStream extends Map {
+
+  constructor() {
+    super();
+  }
+
+  // has(key) {
+  //   let v = super.get(key);
+  //   if (v.constructor === DataCache) {
+  //     v.hasReadyClient() && v.stopStream();
+  //     super.delete(key);
+  //     return false;
+  //   }
+  //   return super.has(key);
+  // }
+
+  removeNoUse() {
+    let that = this;
+    this.forEach(function(value, key, map) {
+      if (value.constructor === DataCache && !value.hasReadyClient()) {
+        value.stopStream();
+        that.delete(key);
+      }
+    });
   }
 }
 
