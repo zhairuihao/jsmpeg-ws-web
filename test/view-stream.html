@@ -30,14 +30,16 @@
       canvas8 = document.getElementById('video-canvas8'), canvas9 = document.getElementById('video-canvas9');
   ;
   var url = 'ws://' + document.location.hostname + ':5000';
-  var player = new JSMpeg.Player(url + '?url=rtsp://admin:ctf84255885@192.168.0.145:554/stream2', {canvas: canvas}),
-      player1 = new JSMpeg.Player(url + '?url=rtmp://58.200.131.2:1935/livetv/hunantv', {canvas: canvas1}),
-      player2 = new JSMpeg.Player(url + '?url=rtsp://admin:ctf84255885@192.168.0.145:554/stream1', {canvas: canvas2}),
-      player3 = new JSMpeg.Player(url + '?url=rtmp://media3.sinovision.net:1935/live/livestream', {canvas: canvas3}),
-      player4 = new JSMpeg.Player(url + '?url=rtmp://202.69.69.180:443/webcast/bshdlive-pc', {canvas: canvas4}),
-      player5 = new JSMpeg.Player(url + '?url=rtmp://mobliestream.c3tv.com:554/live/goodtv.sdp', {canvas: canvas5}),
-      player6 = new JSMpeg.Player(url + '?url=rtmp://live.chosun.gscdn.com/live/tvchosun1.stream', {canvas: canvas6}),
-      player7 = new JSMpeg.Player(url + '?url=rtmp://ns8.indexforce.com/home/mystream', {canvas: canvas7}),
+  // var url = 'ws://10.10.20.81:5000';
+  //-thread_queue_size 512 -acodec libopus
+  var player = new JSMpeg.Player(url + '?url=rtsp://admin:dydljz001@10.10.20.11:554/Streaming/channels/101', {canvas: canvas}),
+      player1 = new JSMpeg.Player(url + '?url=rtsp://admin:dydljz001@10.10.20.254:554/Streaming/channels/101', {canvas: canvas1}),
+      player2 = new JSMpeg.Player(url + '?rtsp://admin:dydljz001@10.10.20.6:554/Streaming/channels/101', {canvas: canvas2}),
+      player3 = new JSMpeg.Player(url + '?rtsp://admin:dydljz001@10.10.20.5:554/Streaming/channels/101', {canvas: canvas3}),
+      player4 = new JSMpeg.Player(url + '?rtsp://admin:dydljz001@10.10.20.4:554/Streaming/channels/101', {canvas: canvas4}),
+      player5 = new JSMpeg.Player(url + '?rtsp://admin:dydljz001@10.10.20.3:554/Streaming/channels/101', {canvas: canvas5}),
+      player6 = new JSMpeg.Player(url + '?rtsp://admin:dydljz001@10.10.20.7:554/Streaming/channels/101', {canvas: canvas6}),
+      player7 = new JSMpeg.Player(url + '?rtsp://admin:dydljz001@10.10.20.2:554/Streaming/channels/101', {canvas: canvas7}),
       player8 = new JSMpeg.Player(url + '?url=rtmp://media3.scctv.net/live/scctv_800', {canvas: canvas8}),
       player9 = new JSMpeg.Player(url + '?url=rtmp://media3.sinovision.net:1935/live/livestream', {canvas: canvas9});
 
